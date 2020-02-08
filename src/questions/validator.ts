@@ -1,19 +1,23 @@
-import { IsNotEmpty, ValidateNested, IsByteLength, Length } from 'class-validator';
-import { Type } from '@nestjs/common';
+import { IsNotEmpty, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class Answers {
-  [k: string]: string;
+  @IsNotEmpty()
+  answerId: string;
+  @IsNotEmpty()
+  answerText: string
 }
 export class NewQuestionValidator {
 
   @IsNotEmpty()
   questionText: string;
 
-
+  @ValidateNested({ each: true })
   @IsNotEmpty()
-  @ValidateNested()
-  answers: Answers;
+  @Type(() => Answers)
+  answers: Answers[];
 
   @IsNotEmpty()
   correctAnswerId: string;
+
 }

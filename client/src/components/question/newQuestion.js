@@ -2,15 +2,15 @@
 import React, { useState } from 'react'
 import shortid from 'shortid';
 
-export default function newQuestion() {
+export default function newQuestion({ fetchQuestions }) {
   const [question, setQuestion] = useState({
     questionText: '',
-    answers: { [shortid()]: '' },
+    answers: [{ answerId: shortid(), answerText: '' }],
     correctAnswerId: ''
   });
   const addAnswer = () => {
     const newQuestion = { ...question };
-    newQuestion.answers = { ...newQuestion.answers, [shortid()]: '' }
+    newQuestion.answers = [...question.answers, { answerId: shortid(), answerText: '' }]
     setQuestion(newQuestion);
   }
   const submitNewQuestion = () => {
@@ -22,39 +22,51 @@ export default function newQuestion() {
       },
       body: JSON.stringify(question)
     })
+      .then(() => {
+        setQuestion({
+          questionText: '',
+          answers: [{ answerId: shortid(), answerText: '' }],
+          correctAnswerId: ''
+        })
+        fetchQuestions();
+      })
       .catch(err => console.log('error post data: ', err))
-    setQuestion({
-      questionText: '',
-      answers: { [shortid()]: '' },
-      correctAnswerId: ''
-    })
   }
   const handleInputChange = (event) => {
+    console.log(event.target);
+
     const editedQuestion = { ...question };
     if (event.target.name === 'questionText' || event.target.name === 'correctAnswerId') {
       editedQuestion[event.target.name] = event.target.value;
     } else {
-      editedQuestion.answers[event.target.name] = event.target.value;
+      const findedAnswerIndex = question.answers.findIndex(answer => answer.answerId === event.target.name)
+      if (findedAnswerIndex > -1) {
+        editedQuestion.answers[findedAnswerIndex] = { answerId: event.target.name, answerText: event.target.value }
+      }
     }
     setQuestion(editedQuestion);
   }
   const removeAnswerHandler = (event) => {
     const NewQuestion = { ...question };
-    delete NewQuestion.answers[event.target.name];
+    const findedAnswerIndex = question.answers.findIndex(answer => answer.answerId === event.target.name)
+    if (findedAnswerIndex > -1) {
+      if (question.answers[findedAnswerIndex].answerId === question.correctAnswerId) {
+        NewQuestion.correctAnswerId = '';
+      }
+      NewQuestion.answers.splice(findedAnswerIndex, 1);
+    }
     setQuestion(NewQuestion);
   }
-  const mapObject = (object, callback) => Object.keys(object).map(key => callback(key, object[key]));
-
   return (
     <div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <label>Вопрос:
           <input type='text' value={question.questionText} name='questionText' onChange={handleInputChange} />
         </label>
-        {mapObject(question.answers, (key, value) => <div key={key}>
-          <input type="radio" value={key} name="correctAnswerId" onChange={handleInputChange} />
-          <input type='text' name={key} value={value} onChange={handleInputChange} />
-          <input type='button' name={key} value='Удалить' onClick={removeAnswerHandler} />
+        {question.answers.map(answer => <div key={answer.answerId}>
+          <input type="radio" value={answer.answerId} name="correctAnswerId" onChange={handleInputChange} />
+          <input type='text' name={answer.answerId} value={answer.answerText} onChange={handleInputChange} />
+          <input type='button' name={answer.answerId} value='Удалить' onClick={removeAnswerHandler} />
         </div>
         )}
         <button onClick={addAnswer}>Добавить вариант ответа</button>

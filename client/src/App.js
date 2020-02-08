@@ -5,18 +5,21 @@ import NewQuestion from './components/question/newQuestion';
 
 function App() {
   const [questions, setQuestions] = useState([]);
-  useEffect(() => {
+  const fetchQuestions = () => {
     fetch('http://localhost:3000')
       .then(res => res.json())
       .then(res => setQuestions(res))
       .catch(err => console.log('fetch error: ', err))
+  }
+  useEffect(() => {
+    fetchQuestions()
   }, [])
 
   return (
     <>
-      <NewQuestion />
+      <NewQuestion fetchQuestions={fetchQuestions} />
       <div>
-        {/* {questions.map(question => <Question key={question.id} questionText={question.questionText} answers={question.answers} />)} */}
+        {questions.map(question => <Question key={question.id} questionText={question.questionText} answers={question.answers} />)}
       </div>
     </>
   );
